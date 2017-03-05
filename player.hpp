@@ -3,8 +3,12 @@
 
 #include <iostream>
 #include <cmath>
+#include <climits>
 #include "common.hpp"
 #include "board.hpp"
+
+#define TREE_DEPTH 2
+
 using namespace std;
 
 class Player {
@@ -17,6 +21,8 @@ public:
     Player(Side side);
     ~Player();
 
+    void setBoard(Board *board);
+    int minimaxHelper(Board *temp_b, Side s, int depth, Move *m);
     Move *doMove(Move *opponentsMove, int msLeft);
 
     // Flag to tell if the player is running within the test_minimax context
