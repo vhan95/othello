@@ -8,7 +8,9 @@ using namespace std;
 
 class Player {
 private:
-    Board b;
+    Board *b;
+    Side s_player;
+    Side s_enemy;
 
 public:
     Player(Side side);
