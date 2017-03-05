@@ -51,15 +51,24 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     if (!b->hasMoves(s_player))
         return nullptr;
     else {
+        // Heuristic to beat simple player is to play as away from center as possible.
+        int max_dist = -1;
+        Move *m = new Move(0, 0);
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                Move *m = new Move(i, j);
-                if (b->checkMove(m, s_player)) {
-                    b->doMove(m, s_player);
-                    return m;
+                Move temp_move(i, j);
+                if (b->checkMove(&temp_move, s_player)) {
+                    int dist = abs(i-3) + abs(j-3); // 3 is approximately the center
+                    if (dist > max_dist) {
+                        max_dist = dist;
+                        m->setX(i);
+                        m->setY(j);
+                    }
                 }
             }
         }
+        b->doMove(m, s_player);
+        return m;
     }
     return nullptr;
 }
