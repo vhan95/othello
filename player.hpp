@@ -7,7 +7,7 @@
 #include "common.hpp"
 #include "board.hpp"
 
-#define TREE_DEPTH 2
+#define TREE_DEPTH 4
 
 using namespace std;
 
@@ -22,7 +22,7 @@ public:
     ~Player();
 
     void setBoard(Board *board);
-    int minimaxHelper(Board *temp_b, Side s, int depth, Move *m);
+    int minimaxHelper(Board *temp_b, Side s, int depth, int beta, Move *m);
     Move *doMove(Move *opponentsMove, int msLeft);
 
     // Flag to tell if the player is running within the test_minimax context

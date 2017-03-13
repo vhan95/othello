@@ -7,7 +7,7 @@
  */
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
-    testingMinimax = true;
+    testingMinimax = false;
 
     
     b = new Board();
@@ -36,9 +36,10 @@ void Player::setBoard(Board *board) {
  * Helper function for computing the minimax decision tree. Given a board, 
  * recursively finds the move with the largest minimum score.
  * Also takes in a parameter depth, telling it how far to recurse.
+ * Parameter beta is used for alpha beta pruning.
  * Returns with the proper minimax move in the passed in parameter m.
  */
-int Player::minimaxHelper(Board *temp_b, Side s, int depth, Move *m) {
+int Player::minimaxHelper(Board *temp_b, Side s, int depth, int beta, Move *m) {
     if (depth == 0) {
         // We are done recursing.
         if (s == Side::WHITE) {
@@ -67,15 +68,20 @@ int Player::minimaxHelper(Board *temp_b, Side s, int depth, Move *m) {
                     
                     // Do the resursion with the other side and one less depth.
                     if (s == Side::WHITE)
-                        min = minimaxHelper(temp_board, Side::BLACK, depth-1, &unused_move);
+                        min = minimaxHelper(temp_board, Side::BLACK, depth-1, minimax, &unused_move);
                     else
-                        min = minimaxHelper(temp_board, Side::WHITE, depth-1, &unused_move);
+                        min = minimaxHelper(temp_board, Side::WHITE, depth-1, minimax, &unused_move);
                     
                     // Other player will choose the min for us. Now we choose our max.
                     if (min > minimax) {
                         minimax = min;
                         final_m->setX(temp_move.getX());
                         final_m->setY(temp_move.getY());
+                        
+                        // alpha beta pruning
+                        if (minimax > beta) // Current minimax value is alpha
+                            break;                  // In this case, we know other player won't choose 
+                                                    //   this branch, so no need to calculate more.
                     }
                     delete temp_board;
                 }
@@ -88,9 +94,9 @@ int Player::minimaxHelper(Board *temp_b, Side s, int depth, Move *m) {
         
         // We also need to catch the case where we don't have any moves.
         if (s == Side::WHITE)
-            min = minimaxHelper(temp_b, Side::BLACK, depth-1, &unused_move);
+            min = minimaxHelper(temp_b, Side::BLACK, depth-1, minimax, &unused_move);
         else
-            min = minimaxHelper(temp_b, Side::WHITE, depth-1, &unused_move);
+            min = minimaxHelper(temp_b, Side::WHITE, depth-1, minimax, &unused_move);
         
         // In this case, the best course of action is to pass.
         if (min > minimax) {
@@ -98,6 +104,7 @@ int Player::minimaxHelper(Board *temp_b, Side s, int depth, Move *m) {
             delete final_m;
             final_m = nullptr;
         }
+        
         
         // Return the minimax score for player.
         return -1*minimax;        // Negate because its the opposite score for
@@ -121,44 +128,16 @@ int Player::minimaxHelper(Board *temp_b, Side s, int depth, Move *m) {
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     
-    if (testingMinimax) {
-        b->doMove(opponentsMove, s_enemy);
-        if (!b->hasMoves(s_player))
-            return nullptr;
-        else {
-            Move *m = new Move(0, 0);
-            minimaxHelper(b, s_player, TREE_DEPTH, m);
-            b->doMove(m, s_player);
-            return m;
-        }
-    }
+    // Alpha-beta pruning version
+    
+    b->doMove(opponentsMove, s_enemy);
+    if (!b->hasMoves(s_player))
+        return nullptr;
     else {
-        // Non tree version
-        
-        b->doMove(opponentsMove, s_enemy);
-        if (!b->hasMoves(s_player))
-            return nullptr;
-        else {
-            // Heuristic to beat simple player is to play as away from center as possible.
-            int max_dist = -1;
-            Move *m = new Move(0, 0);
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
-                    Move temp_move(i, j);
-                    if (b->checkMove(&temp_move, s_player)) {
-                        int dist = abs(i-3) + abs(j-3); // 3 is approximately the center
-                        if (dist > max_dist) {
-                            max_dist = dist;
-                            m->setX(i);
-                            m->setY(j);
-                        }
-                    }
-                }
-            }
-            b->doMove(m, s_player);
-            return m;
-        }
+        Move *m = new Move(0, 0);
+        minimaxHelper(b, s_player, TREE_DEPTH, INT_MAX, m);
+        b->doMove(m, s_player);
+        return m;
     }
-    return nullptr;
 }
 
